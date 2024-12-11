@@ -25,20 +25,16 @@ logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
 
 # Constants
-# USERNAME = os.getenv('TTUSERNAME')
-# API_TOKEN = os.getenv('CONF_API_TOKEN')
-# AUTH = HTTPBasicAuth(USERNAME, API_TOKEN)
+os.environ['OPENAI_API_KEY'] = os.getenv('OPENAI_API_KEY')
+os.environ["AZURE_OPENAI_ENDPOINT"] = os.getenv('AZURE_OPENAI_ENDPOINT')
 
-# os.environ['OPENAI_API_KEY'] = os.getenv('OPENAI_API_KEY')
-# os.environ["AZURE_OPENAI_ENDPOINT"] = os.getenv('AZURE_OPENAI_ENDPOINT')
-
-slack_token = "xoxb-1059756907140-8126747998468-7c0kwL2i2w5e2tyTYW4Ta9pU"
+slack_token = os.getenv('SLACK_TOKEN')
 slack_client = WebClient(token=slack_token)
 
 # Initialize Azure OpenAI client
 client = AzureOpenAI(
-    azure_endpoint="https://api.chatgpt.tomtom-global.com/",
-    api_key="1f7549b8357f4a508cd291a4342e2546",
+    azure_endpoint=os.getenv('AZURE_OPENAI_ENDPOINT'),
+    api_key= os.getenv('OPENAI_API_KEY'),
     api_version="2024-02-01",
 )
 
@@ -61,22 +57,6 @@ def get_channel_id(channel_name):
     except SlackApiError as e:
         print(f"Error: {e}")
     return None
-
-# def get_recent_messages(channel_id, hours_ago=24):
-#     messages = []
-#     try:
-#         # Calculate timestamp for messages newer than hours_ago
-#         oldest_timestamp = (datetime.now() - timedelta(hours=hours_ago)).timestamp()
-        
-#         result = slack_client.conversations_history(
-#             channel=channel_id,
-#             oldest=oldest_timestamp,
-#             limit=100
-#         )
-#         messages = result["messages"]
-#     except SlackApiError as e:
-#         print(f"Error: {e}")
-#     return messages
 
 def get_latest_message(channel_id):
     try:
@@ -138,28 +118,6 @@ system_prompt =  """You are an AI assistant in the company called Tomtom that an
     You also need to pay attention to the terms and special wordings that might be present, and you need to maintain the professional and accurate manner when summarizing. 
     The user must be able to see all important points accurately in your generated response. Also, your reponse must only include the summarization of the original post, no additional comments are allowed."""
 
-# def handle_message_events(body, logger):
-#     logger.debug("Received message event: {}".format(body))
-    
-#     event = body["event"]
-#     channel_id = event.get("channel")
-    
-#     # Debug print
-#     print(f"Message received in channel: {channel_id}")
-#     print(f"Expected channel: YOUR_CHANNEL_ID")
-    
-#     if channel_id == "YOUR_CHANNEL_ID":
-#         print("Channel match found - processing message")
-#         message_text = event.get("text", "")
-        
-#         # Your existing processing functions here
-#         summary = process_with_azure_openai({"text": message_text}, "Your system prompt")
-        
-#         if summary:
-#             send_direct_message("USER_ID", summary)
-#     else:
-#         print("Message was in different channel - ignoring")
-
 def monitor_channel(channel_id, user_id):
     last_timestamp = None
     while True:
@@ -184,27 +142,6 @@ def monitor_channel(channel_id, user_id):
         except Exception as e:
             print(f"Error: {e}")
             time.sleep(5)
-
-
-
-# def process_with_azure_openai(messages, system_prompt):
-#     # Combine messages into a single text
-#     combined_text = "\n".join([msg["text"] for msg in messages])
-    
-#     try:
-#         response = client.chat.completions.create(
-#             model="dep-gpt-4",
-#             messages=[
-#                 {"role": "system", "content": system_prompt},
-#                 {"role": "user", "content": combined_text}
-#             ],
-#             temperature=0.3,
-#             max_tokens=4096
-#         )
-#         return response.choices[0].message.content
-#     except Exception as e:
-#         print(f"Error in Azure OpenAI processing: {e}")
-#         return None
 
 if __name__ == "__main__":
     logger.info('Channel monitoring has started.')
